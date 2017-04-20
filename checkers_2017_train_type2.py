@@ -41,8 +41,17 @@ EMPTY = '.'
 MAN_PTS = 36
 KING_PTS = 75
 CONNECT_PTS = 1.75
-BASELINE_PTS = 4.5
-SIDECOL_PTS = 9
+
+RED_MAN_ROW_PTS = []
+BLK_MAN_ROW_PTS = []
+MAN_COL_PTS = []
+
+KING_ROW_PTS = []
+KING_COL_PTS = []
+
+# BASELINE_PTS = 4.5
+# SIDECOL_PTS = 9
+
 ENEMY_PTS_RATIO = 0.8
 
 
@@ -306,14 +315,22 @@ class Board:
                     if cell == sideParam['eKing']:
                         num_eKing += 1
 
-        pts = num_aMan * MAN_PTS + num_aKing * KING_PTS + num_aConnect * CONNECT_PTS + \
-              num_aBaseline * BASELINE_PTS + num_aSideCol * SIDECOL_PTS + \
-              - ENEMY_PTS_RATIO * (num_eMan * MAN_PTS + num_eKing * KING_PTS + num_eConnect * CONNECT_PTS +
-                                   num_eBaseline * BASELINE_PTS + num_eSideCol * SIDECOL_PTS)
+        pts = 0
 
-        totalPieceCount = num_aMan + num_aKing + num_eKing + num_eMan
+        totalMan = num_aMan + num_eMan
 
-        return pts / totalPieceCount
+        totalKing = num_aKing + num_eKing
+
+        if totalMan > 0:
+            pts += (num_aMan * MAN_PTS + num_aConnect * CONNECT_PTS + \
+                    num_aBaseline * BASELINE_PTS + num_aSideCol * SIDECOL_PTS + \
+                    - ENEMY_PTS_RATIO * (num_eMan * MAN_PTS + num_eConnect * CONNECT_PTS +
+                                         num_eBaseline * BASELINE_PTS + num_eSideCol * SIDECOL_PTS)) / totalMan
+
+        if totalKing > 0:
+            pts += (num_aKing * KING_PTS - ENEMY_PTS_RATIO * (num_eKing * KING_PTS)) / totalKing
+
+        return pts
 
     def minimax(self, depth, alpha, beta):
         if time.time() >= END_TIME:

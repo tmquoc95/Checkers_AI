@@ -16,5 +16,6 @@ if __name__ == "__main__":
     # random.seed(1995)
     # random.seed(1909)
     # random.seed(3268)
-    random.seed(5130)
-    create_train_data(file, 10)
+    # random.seed(1234)
+    random.seed(4321)
+    create_train_data(file, 4)

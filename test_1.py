@@ -1,7 +1,6 @@
-class TimeUp(Exception):
-    pass
+a = [1,2,3]
+b = a[:]
+b.reverse()
 
-try:
-    raise TimeUp()
-except (TimeUp):
-    print ("OK")
+print (a)
+print (b)

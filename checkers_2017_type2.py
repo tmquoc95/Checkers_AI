@@ -31,20 +31,27 @@ BLK_GRP = {BLK, BLK_K}
 
 ALL_GRP = RED_GRP | BLK_GRP
 
-RED_SIDE_PARAM = {'aMan': RED, 'aKing': RED_K, 'eMan': BLK, 'eKing': BLK_K,
-                  'allies': RED_GRP, 'enemies': BLK_GRP, 'aBaseline': 7, 'eBaseline': 0}
-BLK_SIDE_PARAM = {'aMan': BLK, 'aKing': BLK_K, 'eMan': RED, 'eKing': RED_K,
-                  'allies': BLK_GRP, 'enemies': RED_GRP, 'aBaseline': 0, 'eBaseline': 7}
-
 EMPTY = '.'
 
 # Point constants
 MAN_PTS = 36
 KING_PTS = 75
-CONNECT_PTS = 1.75
-BASELINE_PTS = 9
-SIDECOL_PTS = 4.5
+CONNECT_PTS = 0.4
+
+RED_MAN_ROW_PTS = []
+BLK_MAN_ROW_PTS = []
+MAN_COL_PTS = []
+
+KING_ROW_PTS = []
+KING_COL_PTS = []
+
 ENEMY_PTS_RATIO = 0.8
+
+
+RED_SIDE_PARAM = {'aMan': RED, 'aKing': RED_K, 'eMan': BLK, 'eKing': BLK_K,
+                  'allies': RED_GRP, 'enemies': BLK_GRP, 'aManRowPts': None, 'eManRowPts': None}
+BLK_SIDE_PARAM = {'aMan': BLK, 'aKing': BLK_K, 'eMan': RED, 'eKing': RED_K,
+                  'allies': BLK_GRP, 'enemies': RED_GRP, 'aManRowPts': None, 'eManRowPts': None}
 
 #============================ Common Function ========================
 
@@ -81,9 +88,10 @@ class Player:
         else:
             TRUE_SIDE_PARAM = BLK_SIDE_PARAM
 
+        self.buildPtsTable()
+
     def __str__(self):
         return self.str
-
 
     # Student MUST implement this function
     # The return value should be a move that is denoted by a list of tuples
@@ -102,15 +110,67 @@ class Player:
 
         return result
 
+    def buildPtsTable(self):
+        global KING_ROW_PTS, KING_COL_PTS, \
+            RED_MAN_ROW_PTS, BLK_MAN_ROW_PTS, MAN_COL_PTS
+
+        row0_pts = 6
+        row1_pts = 1
+        row_inc_pts = row1_pts * 0.5
+
+        # add base row pts
+        BLK_MAN_ROW_PTS.append(row0_pts)
+
+        # add 7 other row pts
+        for i in range(0, 7):
+            BLK_MAN_ROW_PTS.append(row_inc_pts * i + row1_pts)
+
+        # copy and reverse for other side
+        RED_MAN_ROW_PTS = BLK_MAN_ROW_PTS[:]
+        RED_MAN_ROW_PTS.reverse()
+
+        RED_SIDE_PARAM['aManRowPts'] = RED_MAN_ROW_PTS
+        RED_SIDE_PARAM['eManRowPts'] = BLK_MAN_ROW_PTS
+
+        BLK_SIDE_PARAM['aManRowPts'] = BLK_MAN_ROW_PTS
+        BLK_SIDE_PARAM['eManRowPts'] = RED_MAN_ROW_PTS
+
+        # bang diem theo cot doi xung cho MAN
+        col0_pts = 8
+        col1_pts = 2
+        col2_pts = 4
+        col3_pts = 6
+
+        MAN_COL_PTS = [col0_pts, col1_pts, col2_pts, col3_pts,
+                       col3_pts, col2_pts, col1_pts, col0_pts]
+
+        # bang diem theo hang doi xung cho KING
+        row0_pts = 2
+        row1_pts = 4
+        row2_pts = 6
+        row3_pts = 8
+
+        KING_ROW_PTS = [row0_pts, row1_pts, row2_pts, row3_pts,
+                        row3_pts, row2_pts, row1_pts, row0_pts]
+
+        # bang diem theo cot cho KING
+        col0_pts = 2
+        col1_pts = 4
+        col2_pts = 6
+        col3_pts = 8
+
+        KING_COL_PTS = [col0_pts, col1_pts, col2_pts, col3_pts,
+                        col3_pts, col2_pts, col1_pts, col0_pts]
+
     def loadParam(self, params):
-        global MAN_PTS, KING_PTS, CONNECT_PTS, \
-            BASELINE_PTS, SIDECOL_PTS, ENEMY_PTS_RATIO
+
+        global MAN_PTS, KING_PTS, CONNECT_PTS, ENEMY_PTS_RATIO
+
 
         MAN_PTS = params[0]
         KING_PTS = params[1]
         CONNECT_PTS = params[2]
-        BASELINE_PTS = params[3]
-        SIDECOL_PTS = params[4]
+
         ENEMY_PTS_RATIO = params[5]
 
 #============================= Board Class ============================================
@@ -261,8 +321,8 @@ class Board:
             else:
                 return -math.inf
 
-        num_aMan = num_aKing = num_aConnect = num_aBaseline = num_aSideCol = \
-            num_eMan = num_eKing = num_eConnect = num_eBaseline = num_eSideCol = 0
+        num_aMan = num_aKing = num_aConnect = pts_aPosition = \
+            num_eMan = num_eKing = num_eConnect = pts_ePosition = 0
 
         sideParam = TRUE_SIDE_PARAM
         iboard = self.board
@@ -274,10 +334,7 @@ class Board:
                 if cell in sideParam['allies']:
                     if cell == sideParam['aMan']:  # man pieces
                         num_aMan += 1
-                        if row == sideParam['aBaseline']:
-                            num_aBaseline += 1
-                        elif col in {0, 7}:
-                            num_aSideCol += 1
+                        pts_aPosition += sideParam['aManRowPts'][row] + MAN_COL_PTS[col]
 
                         if col not in {0, 7}:
                             for direction in {NW, NE, SW, SE}:
@@ -290,14 +347,12 @@ class Board:
 
                     if cell == sideParam['aKing']:
                         num_aKing += 1
+                        pts_aPosition = KING_ROW_PTS[row] + KING_COL_PTS[row]
 
                 elif cell in sideParam['enemies']:
                     if cell == sideParam['eMan']:  # man pieces
                         num_eMan += 1
-                        if row == sideParam['eBaseline']:
-                            num_eBaseline += 1
-                        elif col in {0, 7}:
-                            num_eSideCol += 1
+                        pts_ePosition += sideParam['eManRowPts'][row] + MAN_COL_PTS[col]
 
                         if col not in {0, 7}:
                             for direction in {NW, NE, SW, SE}:
@@ -310,18 +365,15 @@ class Board:
 
                     if cell == sideParam['eKing']:
                         num_eKing += 1
+                        pts_ePosition = KING_ROW_PTS[row] + KING_COL_PTS[row]
 
-
-
-
-        pts = num_aMan * MAN_PTS + num_aKing * KING_PTS + num_aConnect * CONNECT_PTS + \
-              num_aBaseline * BASELINE_PTS + num_aSideCol * SIDECOL_PTS + \
-              - ENEMY_PTS_RATIO * (num_eMan * MAN_PTS + num_eKing * KING_PTS + num_eConnect * CONNECT_PTS +
-                                   num_eBaseline * BASELINE_PTS + num_eSideCol * SIDECOL_PTS )
+        pts = num_aMan * MAN_PTS + num_aKing * KING_PTS + num_aConnect * CONNECT_PTS + pts_aPosition \
+              - ENEMY_PTS_RATIO * (num_eMan * MAN_PTS + num_eKing * KING_PTS + num_eConnect * CONNECT_PTS + pts_ePosition)
 
         totalPieceCount = num_aMan + num_aKing + num_eKing + num_eMan
 
         return pts / totalPieceCount
+
 
     def minimax (self, depth, alpha, beta):
         if time.time() >= END_TIME:

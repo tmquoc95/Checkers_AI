@@ -91,13 +91,18 @@ Initial_Board = [ ['.','b','.','b','.','b','.','b'],\
  #     0 1 2 3 4 5 6 7
 #======================================================================
 def countChessPieces (board):
+
     num_red = num_blk = 0
     for row in board:
         for cell in row:
             if cell == 'r':
                 num_red += 1
+            elif cell == 'R':
+                num_red += 3
             elif cell == 'b':
                 num_blk += 1
+            elif cell == 'B':
+                num_blk += 3
 
     return (num_red, num_blk)
 
@@ -111,18 +116,10 @@ def play(Aplayer, Bplayer, param_A, param_B, start_state = Initial_Board):
 
     A.loadParam(param_A)
     B.loadParam(param_B)
-
-    # A.printParam()
-    # B.printParam()
     
     currPlayer = A
     state = start_state
     board_num = 0
-
-    # BoardPrint(state)
-
-    f_A = open('time_record_A.txt', 'w')
-    f_B = open('time_record_B.txt', 'w')
 
     num_red = num_blk = boardChanged = 0
 
@@ -176,15 +173,14 @@ if __name__ == "__main__":
     reader = csv.reader(param_file)
     data = [[[float(cell) for cell in row], 0] for row in reader]
 
-    Aplayer = imp.load_source('A_module', "checkers_2017_train" + ".py")
-    Bplayer = imp.load_source('B_module', "checkers_2017_train" + ".py")
+    Aplayer = imp.load_source('A_module', "checkers_2017_train_type2" + ".py")
+    Bplayer = imp.load_source('B_module', "checkers_2017_train_type2" + ".py")
 
-    NUMBER_OF_GENERATION = 3
+    NUMBER_OF_GENERATION = 4
 
     NUMBER_OF_PROCESS = 1
-    PROCESS_PARAM = [[0, 30]] # 1 process 4 pop
-    # PROCESS_PARAM = [[0, 41], [41, 88], [88, 150], [150, 299]] # 4 process 300 pop
-    # PROCESS_PARAM = [[0, 88], [88, 299]]  # 2 process 300 pop
+    # PROCESS_PARAM = [[0, 30]] # 1 process 30 pop
+    PROCESS_PARAM = [[0, 30]]
 
     upper_bound = [40, 80, 15, 30, 30, 1.5]
     lower_bound = [15, 25, 0, 0, 0, 0]
@@ -271,6 +267,7 @@ if __name__ == "__main__":
 
         result_data = []
 
+        sample_data = data[: int( len(data) / 2)]
         fMax = data[0][1]
         ndata = []
 
@@ -280,7 +277,7 @@ if __name__ == "__main__":
             subdata = []
 
             while len(subdata) < 2:
-                row1, row2 = random.sample(data, 2)
+                row1, row2 = random.sample(sample_data, 2)
                 # Selection with Stochastic acceptance
                 # row[1] is number of victory for this player, used as fitness value of the player fi
                 # then the probability for this player kept in the next generation is fi/fMax

@@ -78,7 +78,7 @@ Initial_Board = [ ['.','b','.','b','.','b','.','b'],\
 
 # Initial_Board.reverse()
 
- # 7 : . r . r . r . r
+ # 7 : . r . r . r RED_MAN_ROW_PTS. r
  # 6 : r . r . r . r .
  # 5 : . r . r . r . r
  # 4 : . . . . . . . .
@@ -114,8 +114,10 @@ def play(student_A, student_B,start_state = Initial_Board):
 
         if currPlayer == A:
             f_A.write(str(elapse) + '\n')
+            f_A.flush()
         else:
             f_B.write(str(elapse) + '\n')
+            f_B.flush()
 
         #print(move)
 
@@ -150,7 +152,8 @@ def play(student_A, student_B,start_state = Initial_Board):
 
 # sys.stdout = open('output.txt', 'w')
 # play("checkers_2017_manual", "checkers_2017")
-play("checkers_2017", "checkers_2017_manual")
+play("checkers_2017_type2", "checkers_2017_manual")
+# play("checkers_2017_type2", "checkers_2017")
 #play(sys.argv[1],sys.argv[2])
 
     
