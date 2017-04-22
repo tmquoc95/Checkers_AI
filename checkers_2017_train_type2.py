@@ -1,3 +1,4 @@
+
 import math
 import time
 
@@ -8,9 +9,9 @@ END_TIME = None
 
 PROCESSING_TIME = 2.6
 
-ILL = 0  # Constant for illegal moves
-MOV = 1  # Constant for legal forward move
-CAP = 2  # Constant for legal capture
+ILL = 0     # Constant for illegal moves
+MOV = 1     # Constant for legal forward move
+CAP = 2     # Constant for legal capture
 
 # Direction for row and col
 NE = (-1, 1)  # North East
@@ -30,32 +31,33 @@ BLK_GRP = {BLK, BLK_K}
 
 ALL_GRP = RED_GRP | BLK_GRP
 
-RED_SIDE_PARAM = {'aMan': RED, 'aKing': RED_K, 'eMan': BLK, 'eKing': BLK_K,
-                  'allies': RED_GRP, 'enemies': BLK_GRP, 'aBaseline': 7, 'eBaseline': 0}
-BLK_SIDE_PARAM = {'aMan': BLK, 'aKing': BLK_K, 'eMan': RED, 'eKing': RED_K,
-                  'allies': BLK_GRP, 'enemies': RED_GRP, 'aBaseline': 0, 'eBaseline': 7}
-
 EMPTY = '.'
 
 # Point constants
-MAN_PTS = 36
+MAN_PTS = 35
 KING_PTS = 75
-CONNECT_PTS = 1.75
-
-RED_MAN_ROW_PTS = []
-BLK_MAN_ROW_PTS = []
-MAN_COL_PTS = []
-
-KING_ROW_PTS = []
-KING_COL_PTS = []
-
-# BASELINE_PTS = 4.5
-# SIDECOL_PTS = 9
-
+CONNECT_PTS = 1
 ENEMY_PTS_RATIO = 0.8
 
+RED_MAN_ROW_PTS = None
+BLK_MAN_ROW_PTS = None
+MAN_ROW_PTS_ratio = 1
 
-# ============================ Common Function ========================
+MAN_COL_PTS = None
+MAN_COL_PTS_ratio = 1
+
+KING_ROW_PTS = None
+KING_ROW_PTS_ratio = 1
+
+KING_COL_PTS = None
+KING_COL_PTS_ratio =1
+
+RED_SIDE_PARAM = {'aMan': RED, 'aKing': RED_K, 'eMan': BLK, 'eKing': BLK_K,
+                  'allies': RED_GRP, 'enemies': BLK_GRP, 'aManRowPts': None, 'eManRowPts': None}
+BLK_SIDE_PARAM = {'aMan': BLK, 'aKing': BLK_K, 'eMan': RED, 'eKing': RED_K,
+                  'allies': BLK_GRP, 'enemies': RED_GRP, 'aManRowPts': None, 'eManRowPts': None}
+
+#============================ Common Function ========================
 
 def checkValidCell(row, col):
     """Check whether this cell position is valid in chessboard (0 <= row, col <= 7)"""
@@ -75,10 +77,8 @@ def makeKing(board, row, col):
         return True
     return False
 
-
-def copyBoard(board):
-    return list(row[:] for row in board)
-
+def copyBoard (board):
+    return list (row[:] for row in board)
 
 # ======================== Class Player =======================================
 class Player:
@@ -92,6 +92,8 @@ class Player:
         else:
             TRUE_SIDE_PARAM = BLK_SIDE_PARAM
 
+        self.buildPtsTable()
+
     def __str__(self):
         return self.str
 
@@ -99,8 +101,12 @@ class Player:
     # The return value should be a move that is denoted by a list of tuples
     def nextMove(self, state):
         global END_TIME
-        # END_TIME = time.time() + PROCESSING_TIME      # REAL MATCHES
-        END_TIME = +math.inf                            # TRAINING MATCHES
+
+        # # Real matches version
+        # END_TIME = time.time() + PROCESSING_TIME
+
+        # # Train version
+        END_TIME = +math.inf
 
         if self.str == RED:
             sidecolor = BLK
@@ -113,20 +119,97 @@ class Player:
 
         return result
 
+    def buildPtsTable(self):
+        global KING_ROW_PTS, KING_COL_PTS, \
+            RED_MAN_ROW_PTS, BLK_MAN_ROW_PTS, MAN_COL_PTS, RED_SIDE_PARAM, BLK_SIDE_PARAM
+
+        row0_pts = 4
+        row1_pts = 0
+        row_inc_pts = 0.5
+
+        BLK_MAN_ROW_PTS = [row0_pts] + [row1_pts + row_inc_pts* i  for i in range(7)]
+        BLK_MAN_ROW_PTS = [MAN_ROW_PTS_ratio * i for i in BLK_MAN_ROW_PTS]
+
+        # copy and reverse for other side
+        RED_MAN_ROW_PTS = BLK_MAN_ROW_PTS[:]
+        RED_MAN_ROW_PTS.reverse()
+
+        RED_SIDE_PARAM['aManRowPts'] = RED_MAN_ROW_PTS
+        RED_SIDE_PARAM['eManRowPts'] = BLK_MAN_ROW_PTS
+
+        BLK_SIDE_PARAM['aManRowPts'] = BLK_MAN_ROW_PTS
+        BLK_SIDE_PARAM['eManRowPts'] = RED_MAN_ROW_PTS
+
+        # bang diem theo cot doi xung cho MAN
+        col0_pts = 4
+        col1_pts = 1
+        col2_pts = 2
+        col3_pts = 3
+
+        MAN_COL_PTS = [col0_pts, col1_pts, col2_pts, col3_pts,
+                       col3_pts, col2_pts, col1_pts, col0_pts]
+
+        MAN_COL_PTS = [MAN_COL_PTS_ratio * i for i in MAN_COL_PTS]
+
+        # bang diem theo hang doi xung cho KING
+        row0_pts = 1
+        row1_pts = 2
+        row2_pts = 3
+        row3_pts = 4
+
+        KING_ROW_PTS = [row0_pts, row1_pts, row2_pts, row3_pts,
+                        row3_pts, row2_pts, row1_pts, row0_pts]
+
+        KING_ROW_PTS = [KING_ROW_PTS_ratio * i for i in KING_ROW_PTS]
+
+        # bang diem theo cot cho KING
+        col0_pts = 1
+        col1_pts = 2
+        col2_pts = 3
+        col3_pts = 4
+
+        KING_COL_PTS = [col0_pts, col1_pts, col2_pts, col3_pts,
+                        col3_pts, col2_pts, col1_pts, col0_pts]
+
+        KING_COL_PTS = [KING_COL_PTS_ratio * i for i in KING_COL_PTS]
+
     def loadParam(self, params):
-        global MAN_PTS, KING_PTS, CONNECT_PTS, \
-            BASELINE_PTS, SIDECOL_PTS, ENEMY_PTS_RATIO
 
-        MAN_PTS = params[0]
-        KING_PTS = params[1]
-        CONNECT_PTS = params[2]
-        BASELINE_PTS = params[3]
-        SIDECOL_PTS = params[4]
-        ENEMY_PTS_RATIO = params[5]
+        global MAN_PTS, KING_PTS, CONNECT_PTS, ENEMY_PTS_RATIO, \
+        MAN_ROW_PTS_ratio, MAN_COL_PTS_ratio, KING_ROW_PTS_ratio, KING_COL_PTS_ratio
 
+        if params[0]:
+            MAN_PTS = params[0]
 
-# ============================= Board Class ============================================
+        if params[1]:
+            KING_PTS = params[1]
+
+        if params[2]:
+            CONNECT_PTS = params[2]
+
+        if params[3]:
+            ENEMY_PTS_RATIO = params[3]
+
+        if params[4]:
+            MAN_ROW_PTS_ratio = params[4]
+
+        if params[5]:
+            MAN_COL_PTS_ratio = params[5]
+
+        if params[6]:
+            KING_ROW_PTS_ratio = params[6]
+
+        if params[7]:
+            KING_COL_PTS_ratio = params[7]
+
+        self.buildPtsTable()
+
+        print (MAN_PTS, KING_PTS, CONNECT_PTS, ENEMY_PTS_RATIO, \
+               MAN_ROW_PTS_ratio, MAN_COL_PTS_ratio, KING_ROW_PTS_ratio, KING_COL_PTS_ratio)
+
+#============================= Board Class ============================================
 class Board:
+
     def __init__(self, sidecolor, board):
         if sidecolor == RED:
             self.nodeParam = RED_SIDE_PARAM
@@ -137,7 +220,7 @@ class Board:
 
         self.isTrueSide = (self.nodeParam == TRUE_SIDE_PARAM)
         self.eval_pts = None
-        self.board = board  # Board is 2-dimensional list
+        self.board = board  #Board is 2-dimensional list
         self.moveList = []
         self.hasBuiltMoveList = False
 
@@ -217,6 +300,7 @@ class Board:
                         return checkCapture_MultiDir(trow, tcol, ndata)
             return ILL
 
+
         def checkCapture_MultiDir(row, col, data):
 
             flag, locs, iboard = data
@@ -252,9 +336,15 @@ class Board:
                     checkCapture_MultiDir(row, col, ndata)
 
     def buildMoveList(self):
+
+        # Force Jump
         self.checkCapture()
         if len(self.moveList) == 0:
             self.checkMove()
+
+        # # Do not force jump
+        # self.checkCapture()
+        # self.checkMove()
 
         self.hasBuiltMoveList = True
 
@@ -265,8 +355,8 @@ class Board:
             else:
                 return -math.inf
 
-        num_aMan = num_aKing = num_aConnect = num_aBaseline = num_aSideCol = \
-            num_eMan = num_eKing = num_eConnect = num_eBaseline = num_eSideCol = 0
+        pts_aMan = pts_aKing = pts_aConnect = pts_aPosition = \
+            pts_eMan = pts_eKing = pts_eConnect = pts_ePosition = 0
 
         sideParam = TRUE_SIDE_PARAM
         iboard = self.board
@@ -275,64 +365,47 @@ class Board:
             for col in range(8):
                 cell = iboard[row][col]
 
-                if cell in sideParam['allies']:
-                    if cell == sideParam['aMan']:  # man pieces
-                        num_aMan += 1
-                        if row == sideParam['aBaseline']:
-                            num_aBaseline += 1
-                        elif col in {0, 7}:
-                            num_aSideCol += 1
+                if cell == sideParam['aMan']:  # man pieces
+                    pts_aMan += MAN_PTS
+                    pts_aPosition += sideParam['aManRowPts'][row] + MAN_COL_PTS[col]
 
-                        if col not in {0, 7}:
-                            for direction in {NW, NE, SW, SE}:
-                                nrow = row + direction[0]
-                                ncol = col + direction[1]
+                    for direction in {NW, NE, SW, SE}:
+                        nrow = row + direction[0]
+                        ncol = col + direction[1]
 
-                                if checkValidCell(nrow, ncol):
-                                    if iboard[nrow][ncol] in sideParam['allies']:
-                                        num_aConnect += 1
+                        if checkValidCell(nrow, ncol):
+                            if iboard[nrow][ncol] in sideParam['allies']:
+                                pts_aConnect += CONNECT_PTS
 
-                    if cell == sideParam['aKing']:
-                        num_aKing += 1
+                if cell == sideParam['aKing']:
+                    pts_aKing += KING_PTS
+                    pts_aPosition += KING_ROW_PTS[row] + KING_COL_PTS[col]
 
-                elif cell in sideParam['enemies']:
-                    if cell == sideParam['eMan']:  # man pieces
-                        num_eMan += 1
-                        if row == sideParam['eBaseline']:
-                            num_eBaseline += 1
-                        elif col in {0, 7}:
-                            num_eSideCol += 1
+                if cell == sideParam['eMan']:  # man pieces
+                    pts_eMan += MAN_PTS
+                    pts_ePosition += sideParam['eManRowPts'][row] + MAN_COL_PTS[col]
 
-                        if col not in {0, 7}:
-                            for direction in {NW, NE, SW, SE}:
-                                nrow = row + direction[0]
-                                ncol = col + direction[1]
+                    for direction in {NW, NE, SW, SE}:
+                        nrow = row + direction[0]
+                        ncol = col + direction[1]
 
-                                if checkValidCell(nrow, ncol):
-                                    if iboard[nrow][ncol] in sideParam['enemies']:
-                                        num_eConnect += 1
+                        if checkValidCell(nrow, ncol):
+                            if iboard[nrow][ncol] in sideParam['enemies']:
+                                pts_eConnect += CONNECT_PTS
 
-                    if cell == sideParam['eKing']:
-                        num_eKing += 1
+                if cell == sideParam['eKing']:
+                    pts_eKing += KING_PTS
+                    pts_ePosition += KING_ROW_PTS[row] + KING_COL_PTS[col]
 
-        pts = 0
+        pts = (pts_aMan + pts_aKing + pts_aConnect + pts_aPosition) \
+              / (pts_eMan + pts_eKing)
 
-        totalMan = num_aMan + num_eMan
-
-        totalKing = num_aKing + num_eKing
-
-        if totalMan > 0:
-            pts += (num_aMan * MAN_PTS + num_aConnect * CONNECT_PTS + \
-                    num_aBaseline * BASELINE_PTS + num_aSideCol * SIDECOL_PTS + \
-                    - ENEMY_PTS_RATIO * (num_eMan * MAN_PTS + num_eConnect * CONNECT_PTS +
-                                         num_eBaseline * BASELINE_PTS + num_eSideCol * SIDECOL_PTS)) / totalMan
-
-        if totalKing > 0:
-            pts += (num_aKing * KING_PTS - ENEMY_PTS_RATIO * (num_eKing * KING_PTS)) / totalKing
+        pts -= ENEMY_PTS_RATIO * (pts_eMan + pts_eKing + pts_eConnect + pts_ePosition) \
+               / (pts_aMan + pts_aKing)
 
         return pts
 
-    def minimax(self, depth, alpha, beta):
+    def minimax (self, depth, alpha, beta):
         if time.time() >= END_TIME:
             raise TimeUp()
 
@@ -375,8 +448,7 @@ class Board:
         # except (TimeUp):
         #     pass
         #
-        # print(MINIMAX_DEPTH)
-
+        # print (MINIMAX_DEPTH)
 
         # # For TRAINING MATCHES
         self.minimax(5, -math.inf, +math.inf)
@@ -389,7 +461,7 @@ class Board:
         except:
             return []
 
-    def MoveListPrint(self):
+    def MoveListPrint (self):
         def printBoard(board):
 
             # print("====== The current board(", num, ")is (after move): ======")
@@ -405,8 +477,8 @@ class Board:
 
         for move in self.moveList:
             type, step, board = move
-            print(type)
-            print(step)
+            print (type)
+            print (step)
             printBoard(board)
 
 

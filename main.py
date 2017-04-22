@@ -112,7 +112,7 @@ def play(student_A, student_B,start_state = Initial_Board):
         move = currPlayer.nextMove(state)
         elapse = time.time() - start
 
-        if currPlayer == A:
+        if currPlayer == B:
             f_A.write(str(elapse) + '\n')
             f_A.flush()
         else:
@@ -152,7 +152,9 @@ def play(student_A, student_B,start_state = Initial_Board):
 
 # sys.stdout = open('output.txt', 'w')
 # play("checkers_2017_manual", "checkers_2017")
+# play("checkers_2017_manual", "checkers_2017_type2")
 play("checkers_2017_type2", "checkers_2017_manual")
+# play("checkers_2017", "checkers_2017_type2")
 # play("checkers_2017_type2", "checkers_2017")
 #play(sys.argv[1],sys.argv[2])
 

@@ -171,12 +171,12 @@ if __name__ == "__main__":
 
     param_file = open('train_data/test_param_0.csv', "r")
     reader = csv.reader(param_file)
-    data = [[[float(cell) for cell in row], 0] for row in reader]
+    data = [[[float(cell) if cell else None for cell in row], 0] for row in reader]
 
-    Aplayer = imp.load_source('A_module', "checkers_2017_train_type2" + ".py")
-    Bplayer = imp.load_source('B_module', "checkers_2017_train_type2" + ".py")
+    Aplayer = imp.load_source('A_module', "checkers_2017_train" + ".py")
+    Bplayer = imp.load_source('B_module', "checkers_2017_train" + ".py")
 
-    NUMBER_OF_GENERATION = 4
+    NUMBER_OF_GENERATION = 2
 
     NUMBER_OF_PROCESS = 1
     # PROCESS_PARAM = [[0, 30]] # 1 process 30 pop
@@ -265,52 +265,53 @@ if __name__ == "__main__":
         result_writer.writerows(result_data)
         match_result_file.close()
 
-        result_data = []
-
-        sample_data = data[: int( len(data) / 2)]
-        fMax = data[0][1]
-        ndata = []
-
-        # Create a new generation keeping the same size as the previous one
-        for i in range(len(data)):
-            # Choose 2 random element from the current generation
-            subdata = []
-
-            while len(subdata) < 2:
-                row1, row2 = random.sample(sample_data, 2)
-                # Selection with Stochastic acceptance
-                # row[1] is number of victory for this player, used as fitness value of the player fi
-                # then the probability for this player kept in the next generation is fi/fMax
-                if random.random() < row1[1] / fMax and random.random() < row2[1] / fMax:
-                    subdata.append(row1[0])
-                    subdata.append(row2[0])
-
-            # Crossover & Mutation
-            KEEP_A_RATIO = 0.5
-            MUTATION_RATIO = 0.05
-
-            new_player = []
-
-            for j in range(6):
-                new_value = None
-                if random.random() < KEEP_A_RATIO:
-                    new_value = subdata[0][j]
-                else:
-                    new_value = subdata[1][j]
-
-                if random.random() < MUTATION_RATIO:
-                    new_value = random.gauss(new_value, SIGMA[j])
-                else:
-                    new_value = random.gauss(new_value, LOCAL_SIGMA[j])
-
-                new_player.append(new_value)
-
-            ndata.append(new_player)
-
+        # # Tao quan the moi
+        # result_data = []
+        #
+        # sample_data = data[: int( len(data) / 2)]
+        # fMax = data[0][1]
+        # ndata = []
+        #
+        # # Create a new generation keeping the same size as the previous one
+        # for i in range(len(data)):
+        #     # Choose 2 random element from the current generation
+        #     subdata = []
+        #
+        #     while len(subdata) < 2:
+        #         row1, row2 = random.sample(sample_data, 2)
+        #         # Selection with Stochastic acceptance
+        #         # row[1] is number of victory for this player, used as fitness value of the player fi
+        #         # then the probability for this player kept in the next generation is fi/fMax
+        #         if random.random() < row1[1] / fMax and random.random() < row2[1] / fMax:
+        #             subdata.append(row1[0])
+        #             subdata.append(row2[0])
+        #
+        #     # Crossover & Mutation
+        #     KEEP_A_RATIO = 0.5
+        #     MUTATION_RATIO = 0.05
+        #
+        #     new_player = []
+        #
+        #     for j in range(6):
+        #         new_value = None
+        #         if random.random() < KEEP_A_RATIO:
+        #             new_value = subdata[0][j]
+        #         else:
+        #             new_value = subdata[1][j]
+        #
+        #         if random.random() < MUTATION_RATIO:
+        #             new_value = random.gauss(new_value, SIGMA[j])
+        #         else:
+        #             new_value = random.gauss(new_value, LOCAL_SIGMA[j])
+        #
+        #         new_player.append(new_value)
+        #
+        #     ndata.append(new_player)
+        #
         # new_generation_param_file = open('train_data/test_param_' + str(i_gen) + '.csv', 'w+')  #Local version
-        new_generation_param_file = open('/output/test_param_' + str(i_gen) + '.csv', 'w+')  #Floyd version
-        writer = csv.writer(new_generation_param_file)
-        writer.writerows(ndata)
-        new_generation_param_file.close()
-
-        data = [[row, 0] for row in ndata]
+        # # new_generation_param_file = open('/output/test_param_' + str(i_gen) + '.csv', 'w+')  #Floyd version
+        # writer = csv.writer(new_generation_param_file)
+        # writer.writerows(ndata)
+        # new_generation_param_file.close()
+        #
+        # data = [[row, 0] for row in ndata]
